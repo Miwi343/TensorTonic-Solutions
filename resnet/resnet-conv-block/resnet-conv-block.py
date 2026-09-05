@@ -16,8 +16,8 @@ def conv_block(x, W1, W2, Ws):
     
     y = np.clip(
         hidden1 @ W2 + x @ Ws,
-        a_min=0,
-        a_max=None
+        min=0,
+        max=None
         )
 
     return np.round(y, decimals=4).tolist()
