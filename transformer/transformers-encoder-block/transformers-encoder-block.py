@@ -7,27 +7,27 @@ def softmax(x, axis=-1):
 
 def multi_head_attention(q, k, v, W_q, W_k, W_v, W_o, num_heads):
         
-        batch, seq_len, d_model = q.shape
-        d_k = d_model // num_heads
+    batch, seq_len, d_model = q.shape
+    d_k = d_model // num_heads
 
-        def split(x, W):
-            projected =  (x @ W).reshape(batch, seq_len, num_heads, d_k)
-            return projected.transpose(0, 2, 1, 3)
-            # (batch, num_heads, seq_len, d_k)
-
-        Q, K, V = split(q, W_q), split(k, W_k), split(v, W_v)
-
-        attention = Q @ K.transpose(0, 1, 3, 2) / np.sqrt(d_k)
-        # (batch, num_heads, seq_len, seq_len)
-        out = softmax(attention) @ V
+    def split(x, W):
+        projected =  (x @ W).reshape(batch, seq_len, num_heads, d_k)
+        return projected.transpose(0, 2, 1, 3)
         # (batch, num_heads, seq_len, d_k)
-        out = out.transpose(0, 2, 1, 3).reshape(batch, seq_len, d_model)
-        # (batch, num_heads, seq_len, d_k) -> (b, s, n, d) -> (batch, seq_len, d_model)
-        return out @ W_o
+
+    Q, K, V = split(q, W_q), split(k, W_k), split(v, W_v)
+
+    attention = Q @ K.transpose(0, 1, 3, 2) / np.sqrt(d_k)
+    # (batch, num_heads, seq_len, seq_len)
+    out = softmax(attention) @ V
+    # (batch, num_heads, seq_len, d_k)
+    out = out.transpose(0, 2, 1, 3).reshape(batch, seq_len, d_model)
+    # (batch, num_heads, seq_len, d_k) -> (b, s, n, d) -> (batch, seq_len, d_model)
+    return out @ W_o
 
 def feed_forward(z, W1, b1, W2, b2):
-        hidden = np.clip(z @ W1 + b1, a_min=0, a_max=None)
-        return hidden @ W2 + b2
+    hidden = np.clip(z @ W1 + b1, a_min=0, a_max=None)
+    return hidden @ W2 + b2
 
 def layer_norm(x, gamma, beta, eps=1e-6):
     mu = np.mean(x, axis=-1, keepdims=True)
